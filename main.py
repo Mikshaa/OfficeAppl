@@ -25,7 +25,7 @@ def connect(mode = 'check'):
     if not connected:
         print('окно')
 
-
+higi
 
 if connect():
     print('connected')
