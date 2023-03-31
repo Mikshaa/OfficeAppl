@@ -18,6 +18,7 @@ curDeviceCode = 'Не выбрано'
 curAmount = 0
 inputFilesPath = ''
 outputFilesPath = ''
+contractFilePath = ''
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -90,8 +91,6 @@ class Ui_MainWindow(object):
         
         self.buttonGenerate = QtWidgets.QPushButton(self.centralwidget)
         self.buttonGenerate.setGeometry(QtCore.QRect(365, 350, 470, 88))
-
-
         font = QtGui.QFont()
         font.setFamily("Corbel")
         font.setPointSize(16)
@@ -131,7 +130,7 @@ class Ui_MainWindow(object):
                                         "border: 1px solid;\n"
                                         "border-radius: 4px;\n"
                                         "background-color: #fff")
-        self.buttonGetOutput.clicked.connect(self.get_output_files_path)
+        self.buttonGetOutput.clicked.connect(self.getOutputFilesPath)
         self.buttonGetOutput.setObjectName("pushButton_4")
 
         #############################################
@@ -143,7 +142,7 @@ class Ui_MainWindow(object):
                                         "border: 1px solid;\n"
                                         "border-radius: 4px;\n"
                                         "background-color: #fff")
-        self.buttonGetInput.clicked.connect(self.get_input_files_path)
+        self.buttonGetInput.clicked.connect(self.getInputFilesPath)
         self.buttonGetInput.setObjectName("pushButton_5")
         
         #############################################
@@ -165,6 +164,30 @@ class Ui_MainWindow(object):
         font.setPointSize(11)
         self.labelDeviceCode.setFont(font)
         self.labelDeviceCode.setObjectName("label_3")
+
+        #############################################
+
+        self.labelContract = QtWidgets.QLabel(self.centralwidget)
+        self.labelContract.setGeometry(QtCore.QRect(730, 80, 210, 30))
+        font = QtGui.QFont()
+        font.setFamily("Corbel")
+        font.setPointSize(11)
+        self.labelContract.setFont(font)
+        self.labelContract.setObjectName("label_6")
+        self.labelContract.hide()
+
+        #############################################
+
+        self.buttonGetContract = QtWidgets.QPushButton(self.centralwidget)
+        self.buttonGetContract.setGeometry(QtCore.QRect(955, 78, 40, 40))
+        self.buttonGetContract.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        self.buttonGetContract.setStyleSheet("border-color: #000;\n"
+                                           "border: 1px solid;\n"
+                                           "border-radius: 4px;\n"
+                                           "background-color: #fff")
+        self.buttonGetContract.clicked.connect(self.getContract)
+        self.buttonGetContract.setObjectName("pushButton_4")
+        self.buttonGetContract.hide()
 
         #############################################
         
@@ -249,6 +272,17 @@ class Ui_MainWindow(object):
         curAmount = amount
 
     def deviceMode(self):
+        global curMode
+        curMode = 'Изделие'
+
+        self.labelDeviceCode.show()
+        self.comboBoxGetDevice.show()
+        self.lineEditAmount.show()
+        self.labelGetAmount.show()
+
+        self.labelContract.hide()
+        self.buttonGetContract.hide()
+
         self.buttonDevice.setStyleSheet("QPushButton{\n"
                                       "background-color: #94C7E6;\n"
                                       "border: 0px solid;\n"
@@ -264,7 +298,18 @@ class Ui_MainWindow(object):
 
     def contractMode(self):
         global curMode
-        curMode = 'Изделие'
+        global curSecondMode
+        curMode = 'Договор'
+        curSecondMode = 'Консолидация'
+
+        self.labelDeviceCode.hide()
+        self.comboBoxGetDevice.hide()
+        self.lineEditAmount.hide()
+        self.labelGetAmount.hide()
+
+        self.labelContract.show()
+        self.buttonGetContract.show()
+
         self.buttonContract.setStyleSheet("QPushButton{\n"
                                         "background-color: #94C7E6;\n"
                                         "border: 0px solid;\n"
@@ -280,7 +325,16 @@ class Ui_MainWindow(object):
                                       "border-radius: 33px;\n"
                                       "}\n")
 
-    def get_input_files_path(self):
+    def getContract(self):
+        global contractFilePath
+        contractFilePath = QtWidgets.QFileDialog.getOpenFileName()
+        if 1: # check contract file
+            pass
+        else:
+            contractFilePath = ''
+        print(contractFilePath)
+
+    def getInputFilesPath(self):
         global inputFilesPath
         inputFilesPath = QtWidgets.QFileDialog.getExistingDirectory()
         if 1: # Check directory
@@ -289,7 +343,7 @@ class Ui_MainWindow(object):
             inputFilesPath = ''
 
 
-    def get_output_files_path(self):
+    def getOutputFilesPath(self):
         global outputFilesPath
         outputFilesPath = QtWidgets.QFileDialog.getExistingDirectory()
         if 1: # Check directiory
@@ -310,6 +364,8 @@ class Ui_MainWindow(object):
         self.labelGetOutput.setText(_translate("MainWindow", "Сохранять в"))
         self.labelDeviceCode.setText(_translate("MainWindow", "Выбор изделия"))
         self.labelGetAmount.setText(_translate("MainWindow", "Количество"))
+        self.labelContract.setText(_translate("MainWindow", "Выбор договора"))
+        self.buttonGetContract.setText(_translate("MainWindow", "..."))
 import rec_rc
 
 
