@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import os
 
 # Form implementation generated from reading ui file 'C:\Users\Michael\Desktop\design.ui'
 #
@@ -19,6 +20,8 @@ curAmount = 0
 inputFilesPath = ''
 outputFilesPath = ''
 contractFilePath = ''
+devicesList = []
+devicesTxt = ''
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -327,29 +330,49 @@ class Ui_MainWindow(object):
 
     def getContract(self):
         global contractFilePath
-        contractFilePath = QtWidgets.QFileDialog.getOpenFileName()
-        if 1: # check contract file
+        try:
+            contractFilePath = QtWidgets.QFileDialog.getOpenFileName()[0]
+            if 1: # check contract file на файлы шаблоны
+                if 1: # check zeros in contract
+                    pass
+                else:
+                    contractFilePath = ''
+                    #Вызов ошибки на нули в контракте
+            else:
+                contractFilePath = ''
+                # Вызов окна ошибки на отстутсвие файлов шаблона
+        except:
             pass
-        else:
-            contractFilePath = ''
-        print(contractFilePath)
 
     def getInputFilesPath(self):
         global inputFilesPath
-        inputFilesPath = QtWidgets.QFileDialog.getExistingDirectory()
-        if 1: # Check directory
+        global devicesList
+        global devicesTxt
+        try:
+            inputFilesPath = QtWidgets.QFileDialog.getExistingDirectory()
+            if 1: # Check directory
+                devicesList = os.listdir(inputFilesPath)
+                devicesTxt = devicesList[0]
+            else:
+                inputFilesPath = ''
+                # Вывод ошибки на директорию
+        except:
             pass
-        else:
-            inputFilesPath = ''
 
 
     def getOutputFilesPath(self):
         global outputFilesPath
-        outputFilesPath = QtWidgets.QFileDialog.getExistingDirectory()
-        if 1: # Check directiory
+        try:
+            outputFilesPath = QtWidgets.QFileDialog.getExistingDirectory()
+            if 1:  # Check directiory
+                pass
+            else:
+                outputFilesPath = ''
+                # Вызов окна ошибки
+        except:
             pass
-        else:
-            outputFilesPath = ''
+
+
 
 
     def retranslateUi(self, MainWindow):
