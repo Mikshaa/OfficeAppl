@@ -13,6 +13,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtGui import * 
 from PyQt5.QtCore import *
 
+
 curMode = 'Изделие'
 curSecondMode = 'Консолидация'
 curDeviceCode = 'Не выбрано'
@@ -39,56 +40,39 @@ class Ui_MainWindow(object):
         self.centralwidget.setObjectName("centralwidget")
 
         #############################################
-        
-        self.buttonDevice = QtWidgets.QPushButton(self.centralwidget)
-        self.buttonDevice.setGeometry(QtCore.QRect(60, 70, 225, 66))
-        self.buttonDevice.clicked.connect(self.deviceMode)
-        font = QtGui.QFont()
-        font.setFamily("Corbel")
-        font.setPointSize(14)
-        font.setBold(False)
-        font.setWeight(50)
-        font.setKerning(False)
-        self.buttonDevice.setFont(font)
-        self.buttonDevice.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
-        self.buttonDevice.setFocusPolicy(QtCore.Qt.ClickFocus)
-        self.buttonDevice.setStyleSheet("QPushButton{\n"
-                                      "background-color: #94C7E6;\n"
-                                      "border: 0px solid;\n"
-                                      "border-color: #000000;\n"
-                                      "border-radius: 33px;\n"
-                                      "color: #000;\n"
-                                      "\n"
-                                      "}\n"
-                                      "\n"
-                                      "")
-        self.buttonDevice.setObjectName("pushButton")
 
+        self.radioButtonDevice = QtWidgets.QRadioButton(self.centralwidget)
+        self.radioButtonDevice.setGeometry(QtCore.QRect(40, 120, 130, 40))
+        self.radioButtonDevice.setObjectName("radioButton")
+        self.radioButtonDevice.toggled.connect(lambda: self.changeMode(mode='device'))
+
+        self.radioButtonContract = QtWidgets.QRadioButton(self.centralwidget)
+        self.radioButtonContract.setGeometry(QtCore.QRect(40, 160, 130, 40))
+        self.radioButtonContract.setObjectName("radioButton_2")
+        #self.radioButtonContract.toggled.connect(lambda: self.changeMode(mode='contract'))
         #############################################
-        
-        self.buttonContract = QtWidgets.QPushButton(self.centralwidget)
-        self.buttonContract.setGeometry(QtCore.QRect(60, 170, 225, 66))
-        self.buttonContract.clicked.connect(self.contractMode)
-        font = QtGui.QFont()
-        font.setFamily("Corbel")
-        font.setPointSize(14)
-        font.setBold(False)
-        font.setWeight(50)
-        font.setKerning(False)
-        self.buttonContract.setFont(font)
-        self.buttonContract.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
-        self.buttonContract.setFocusPolicy(QtCore.Qt.ClickFocus)
-        self.buttonContract.setStyleSheet("QPushButton{\n"
-                                        "background-color: #ffffff;\n"
-                                        "border: 1px solid;\n"
-                                        "border-color: #000000;\n"
-                                        "border-radius: 33px;\n"
-                                        "color: #000;\n"
-                                        "\n"
-                                        "}\n"
-                                        "\n"
-                                        "")
-        self.buttonContract.setObjectName("pushButton_2")
+
+        self.radioButtonConsolid = QtWidgets.QRadioButton(self.centralwidget)
+        self.radioButtonConsolid.setGeometry(QtCore.QRect(60, 200, 190, 40))
+        self.radioButtonConsolid.setObjectName("radioButton_3")
+        self.radioButtonConsolid.setChecked(True)
+        self.radioButtonConsolid.setEnabled(False)
+        self.radioButtonDelen = QtWidgets.QRadioButton(self.centralwidget)
+        self.radioButtonDelen.setGeometry(QtCore.QRect(60, 240, 130, 40))
+        self.radioButtonDelen.setObjectName("radioButton_4")
+        self.radioButtonDelen.setEnabled(False)
+        self.radioButtonConsolid.toggled.connect(lambda: self.changeSecondMode())
+        #self.radioButtonDelen.toggled.connect(lambda: self.changeSecondMode())
+        #############################################
+
+        self.btngroup1 = QtWidgets.QButtonGroup()
+        self.btngroup2 = QtWidgets.QButtonGroup()
+
+        self.btngroup1.addButton(self.radioButtonDevice)
+        self.btngroup1.addButton(self.radioButtonContract)
+        self.btngroup2.addButton(self.radioButtonConsolid)
+        self.btngroup2.addButton(self.radioButtonDelen)
+        self.radioButtonDevice.setChecked(True)
 
         #############################################
         
@@ -205,6 +189,7 @@ class Ui_MainWindow(object):
         #############################################
         
         self.comboBoxGetDevice = QtWidgets.QComboBox(self.centralwidget)
+        self.comboBoxGetDevice.setEnabled(False)
         self.comboBoxGetDevice.setGeometry(QtCore.QRect(940, 81, 220, 34))
         self.comboBoxGetDevice.addItem('Apple')
         self.comboBoxGetDevice.addItem('banana')
@@ -274,59 +259,34 @@ class Ui_MainWindow(object):
         global curAmount
         curAmount = amount
 
-    def deviceMode(self):
-        global curMode
-        curMode = 'Изделие'
-
-        self.labelDeviceCode.show()
-        self.comboBoxGetDevice.show()
-        self.lineEditAmount.show()
-        self.labelGetAmount.show()
-
-        self.labelContract.hide()
-        self.buttonGetContract.hide()
-
-        self.buttonDevice.setStyleSheet("QPushButton{\n"
-                                      "background-color: #94C7E6;\n"
-                                      "border: 0px solid;\n"
-                                      "border-color: #000000;\n"
-                                      "border-radius: 33px;\n"
-                                      "}\n")
-        self.buttonContract.setStyleSheet("QPushButton{\n"
-                                        "background-color: #ffffff;\n"
-                                        "border: 1px solid;\n"
-                                        "border-color: #000000;\n"
-                                        "border-radius: 33px;\n"
-                                        "}\n")
-
-    def contractMode(self):
+    def changeMode(self, mode):
         global curMode
         global curSecondMode
-        curMode = 'Договор'
-        curSecondMode = 'Консолидация'
+        if self.radioButtonDevice.isChecked():
+            curMode = 'Device'
+            print(curMode)
+            self.radioButtonConsolid.setChecked(True)
+            self.radioButtonDelen.setChecked(False)
+            self.radioButtonConsolid.setEnabled(False)
+            self.radioButtonDelen.setEnabled(False)
+        else:
+            curMode = 'Contract'
+            curSecondMode = 'Consolid'
+            print(curMode)
+            print(curSecondMode)
+            self.radioButtonConsolid.setChecked(True)
+            self.radioButtonDelen.setChecked(False)
+            self.radioButtonConsolid.setEnabled(True)
+            self.radioButtonDelen.setEnabled(True)
 
-        self.labelDeviceCode.hide()
-        self.comboBoxGetDevice.hide()
-        self.lineEditAmount.hide()
-        self.labelGetAmount.hide()
+    def changeSecondMode(self):
+        global curSecondMode
+        if self.radioButtonConsolid.isChecked():
+            curSecondMode = 'Consolid'
+        else:
+            curSecondMode = 'Delen'
+        print(curSecondMode)
 
-        self.labelContract.show()
-        self.buttonGetContract.show()
-
-        self.buttonContract.setStyleSheet("QPushButton{\n"
-                                        "background-color: #94C7E6;\n"
-                                        "border: 0px solid;\n"
-                                        "border-color: #000000;\n"
-                                        "border-radius: 33px;\n"
-                                        "}\n")
-
-            #color = 'background-color: #94C7E6;\n'
-        self.buttonDevice.setStyleSheet("QPushButton{\n"
-                                      "background-color: #ffffff;\n"
-                                      "border: 1px solid;\n"
-                                      "border-color: #000000;\n"
-                                      "border-radius: 33px;\n"
-                                      "}\n")
 
     def getContract(self):
         global contractFilePath
@@ -378,8 +338,6 @@ class Ui_MainWindow(object):
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
-        self.buttonDevice.setText(_translate("MainWindow", "Изделие"))
-        self.buttonContract.setText(_translate("MainWindow", "Договор"))
         self.buttonGenerate.setText(_translate("MainWindow", "Сгенерировать"))
         self.labelGetInput.setText(_translate("MainWindow", "Выбор набора шаблонов"))
         self.buttonGetOutput.setText(_translate("MainWindow", "..."))
@@ -389,6 +347,10 @@ class Ui_MainWindow(object):
         self.labelGetAmount.setText(_translate("MainWindow", "Количество"))
         self.labelContract.setText(_translate("MainWindow", "Выбор договора"))
         self.buttonGetContract.setText(_translate("MainWindow", "..."))
+        self.radioButtonDevice.setText(_translate("MainWindow", "Изделие"))
+        self.radioButtonContract.setText(_translate("MainWindow", "Договор"))
+        self.radioButtonConsolid.setText(_translate("MainWindow", "Консолидация"))
+        self.radioButtonDelen.setText(_translate("MainWindow", "Деление"))
 import rec_rc
 
 
