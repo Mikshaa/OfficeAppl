@@ -27,14 +27,7 @@ devicesTxt = ''
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.setFixedSize(1200, 500)
-
-        font = QtGui.QFont()
-        font.setFamily("Corbel")
-        font.setPointSize(8)
-        font.setBold(False)
-        font.setWeight(50)
-        MainWindow.setFont(font)
+        MainWindow.setFixedSize(1200, 400)
         MainWindow.setStyleSheet("background-color: #F5F5F5")
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
@@ -44,12 +37,13 @@ class Ui_MainWindow(object):
         self.radioButtonDevice = QtWidgets.QRadioButton(self.centralwidget)
         self.radioButtonDevice.setGeometry(QtCore.QRect(40, 120, 130, 40))
         self.radioButtonDevice.setObjectName("radioButton")
-        self.radioButtonDevice.toggled.connect(lambda: self.changeMode(mode='device'))
+
+        #############################################
 
         self.radioButtonContract = QtWidgets.QRadioButton(self.centralwidget)
         self.radioButtonContract.setGeometry(QtCore.QRect(40, 160, 130, 40))
         self.radioButtonContract.setObjectName("radioButton_2")
-        #self.radioButtonContract.toggled.connect(lambda: self.changeMode(mode='contract'))
+
         #############################################
 
         self.radioButtonConsolid = QtWidgets.QRadioButton(self.centralwidget)
@@ -57,17 +51,18 @@ class Ui_MainWindow(object):
         self.radioButtonConsolid.setObjectName("radioButton_3")
         self.radioButtonConsolid.setChecked(True)
         self.radioButtonConsolid.setEnabled(False)
+
+        ##############################################
+
         self.radioButtonDelen = QtWidgets.QRadioButton(self.centralwidget)
         self.radioButtonDelen.setGeometry(QtCore.QRect(60, 240, 130, 40))
         self.radioButtonDelen.setObjectName("radioButton_4")
         self.radioButtonDelen.setEnabled(False)
-        self.radioButtonConsolid.toggled.connect(lambda: self.changeSecondMode())
-        #self.radioButtonDelen.toggled.connect(lambda: self.changeSecondMode())
+
         #############################################
 
         self.btngroup1 = QtWidgets.QButtonGroup()
         self.btngroup2 = QtWidgets.QButtonGroup()
-
         self.btngroup1.addButton(self.radioButtonDevice)
         self.btngroup1.addButton(self.radioButtonContract)
         self.btngroup2.addButton(self.radioButtonConsolid)
@@ -77,126 +72,108 @@ class Ui_MainWindow(object):
         #############################################
         
         self.buttonGenerate = QtWidgets.QPushButton(self.centralwidget)
-        self.buttonGenerate.setGeometry(QtCore.QRect(365, 350, 470, 88))
-        font = QtGui.QFont()
-        font.setFamily("Corbel")
-        font.setPointSize(16)
-        font.setBold(False)
-        font.setWeight(50)
-        font.setKerning(False)
-        self.buttonGenerate.setFont(font)
+        self.buttonGenerate.setGeometry(QtCore.QRect(660, 300, 180, 35))
         self.buttonGenerate.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
         self.buttonGenerate.setFocusPolicy(QtCore.Qt.ClickFocus)
         self.buttonGenerate.setStyleSheet("QPushButton{\n"
-                                        "background-color: #94C7E6;\n"
-                                        "border: 1px solid;\n"
-                                        "border-color: #000000;\n"
-                                        "border-radius: 44px;\n"
-                                        "color: #000;\n"
+                                        "border: 2px solid;\n"
+                                        "border-color: #B7B7B7;\n"
+                                        "border-radius: 6px;\n"
+                                        "color: #B7B7B7;\n"
                                         "\n"
                                         "}\n"
                                         "\n"
                                         "")
         self.buttonGenerate.setObjectName("pushButton_3")
+        self.buttonGenerate.setEnabled(False)
 
         #############################################
+
+        self.buttonGenerate_1 = QtWidgets.QPushButton(self.centralwidget)
+        self.buttonGenerate_1.setGeometry(QtCore.QRect(660, 215, 180, 35))
+        self.buttonGenerate_1.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        self.buttonGenerate_1.setFocusPolicy(QtCore.Qt.ClickFocus)
+        self.buttonGenerate_1.setStyleSheet("QPushButton{\n"
+                                          "border: 1px solid;\n"
+                                          "border-color: #000000;\n"
+                                          "border-radius: 6px;\n"
+                                          "color: #000;\n"
+                                          "\n"
+                                          "}\n"
+                                          "\n"
+                                          "")
+        self.buttonGenerate_1.setObjectName("pushButton_9")
+
+        #############################################
+
         self.labelGetInput = QtWidgets.QLabel(self.centralwidget)
-        self.labelGetInput.setGeometry(QtCore.QRect(320, 80, 340, 30))
-        font = QtGui.QFont()
-        font.setFamily("Corbel")
-        font.setPointSize(11)
-        self.labelGetInput.setFont(font)
+        self.labelGetInput.setGeometry(QtCore.QRect(290, 80, 340, 30))
         self.labelGetInput.setObjectName("label")
+        self.labelGetInput.setStyleSheet("font-size: 21px;\n")
 
         #############################################
         
         self.buttonGetOutput = QtWidgets.QPushButton(self.centralwidget)
-        self.buttonGetOutput.setGeometry(QtCore.QRect(650, 150, 40, 40))
+        self.buttonGetOutput.setGeometry(QtCore.QRect(570, 150, 40, 40))
         self.buttonGetOutput.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
-        self.buttonGetOutput.setStyleSheet("border-color: #000;\n"
-                                        "border: 1px solid;\n"
+        self.buttonGetOutput.setStyleSheet("border: 2px solid;\n"
                                         "border-radius: 4px;\n"
-                                        "background-color: #fff")
-        self.buttonGetOutput.clicked.connect(self.getOutputFilesPath)
+                                        "border-color: #858585;\n"
+                                        "background-color: #D9D9D9")
         self.buttonGetOutput.setObjectName("pushButton_4")
 
         #############################################
         
         self.buttonGetInput = QtWidgets.QPushButton(self.centralwidget)
-        self.buttonGetInput.setGeometry(QtCore.QRect(650, 75, 40, 40))
+        self.buttonGetInput.setGeometry(QtCore.QRect(570, 75, 40, 40))
         self.buttonGetInput.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
-        self.buttonGetInput.setStyleSheet("border-color: #000;\n"
-                                        "border: 1px solid;\n"
+        self.buttonGetInput.setStyleSheet("border: 2px solid;\n"
                                         "border-radius: 4px;\n"
-                                        "background-color: #fff")
-        self.buttonGetInput.clicked.connect(self.getInputFilesPath)
+                                        "border-color: #858585;\n"
+                                        "background-color: #D9D9D9")
         self.buttonGetInput.setObjectName("pushButton_5")
-        
+
         #############################################
         
         self.labelGetOutput = QtWidgets.QLabel(self.centralwidget)
-        self.labelGetOutput.setGeometry(QtCore.QRect(475, 155, 150, 22))
-        font = QtGui.QFont()
-        font.setFamily("Corbel")
-        font.setPointSize(11)
-        self.labelGetOutput.setFont(font)
+        self.labelGetOutput.setGeometry(QtCore.QRect(420, 155, 140, 30))
         self.labelGetOutput.setObjectName("label_2")
+        self.labelGetOutput.setStyleSheet("font-size: 21px;\n")
 
         #############################################
         
         self.labelDeviceCode = QtWidgets.QLabel(self.centralwidget)
-        self.labelDeviceCode.setGeometry(QtCore.QRect(730, 80, 210, 30))
-        font = QtGui.QFont()
-        font.setFamily("Corbel")
-        font.setPointSize(11)
-        self.labelDeviceCode.setFont(font)
+        self.labelDeviceCode.setGeometry(QtCore.QRect(660, 25, 210, 30))
         self.labelDeviceCode.setObjectName("label_3")
+        self.labelDeviceCode.setStyleSheet("font-size: 21px;\n")
 
         #############################################
 
         self.labelContract = QtWidgets.QLabel(self.centralwidget)
-        self.labelContract.setGeometry(QtCore.QRect(730, 80, 210, 30))
-        font = QtGui.QFont()
-        font.setFamily("Corbel")
-        font.setPointSize(11)
-        self.labelContract.setFont(font)
+        self.labelContract.setGeometry(QtCore.QRect(385, 300, 210, 30))
         self.labelContract.setObjectName("label_6")
-        self.labelContract.hide()
+        self.labelContract.setEnabled(False)
 
         #############################################
 
         self.buttonGetContract = QtWidgets.QPushButton(self.centralwidget)
-        self.buttonGetContract.setGeometry(QtCore.QRect(955, 78, 40, 40))
+        self.buttonGetContract.setGeometry(QtCore.QRect(570, 298, 40, 40))
         self.buttonGetContract.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
-        self.buttonGetContract.setStyleSheet("border-color: #000;\n"
-                                           "border: 1px solid;\n"
+        self.buttonGetContract.setStyleSheet("border: 2px solid;\n"
                                            "border-radius: 4px;\n"
-                                           "background-color: #fff")
-        self.buttonGetContract.clicked.connect(self.getContract)
+                                            "color: #B7B7B7;\n"
+                                           "border-color: #B7B7B7;\n"
+                                           "background-color: #F4F4F4")
         self.buttonGetContract.setObjectName("pushButton_4")
-        self.buttonGetContract.hide()
+        self.buttonGetContract.setEnabled(False)
 
         #############################################
-        
-        self.labelGetAmount = QtWidgets.QLabel(self.centralwidget)
-        self.labelGetAmount.setGeometry(QtCore.QRect(775, 155, 162, 22))
-        font = QtGui.QFont()
-        font.setFamily("Corbel")
-        font.setPointSize(11)
-        self.labelGetAmount.setFont(font)
-        self.labelGetAmount.setObjectName("label_4")
 
-        #############################################
-        
         self.comboBoxGetDevice = QtWidgets.QComboBox(self.centralwidget)
-        self.comboBoxGetDevice.setEnabled(False)
-        self.comboBoxGetDevice.setGeometry(QtCore.QRect(940, 81, 220, 34))
+        #self.comboBoxGetDevice.setEnabled(False)
+        self.comboBoxGetDevice.setGeometry(QtCore.QRect(660, 75, 500, 40))
         self.comboBoxGetDevice.addItem('Apple')
         self.comboBoxGetDevice.addItem('banana')
-        font = QtGui.QFont()
-        font.setFamily("Corbel")
-        font.setPointSize(9)
-        self.comboBoxGetDevice.setFont(font)
         self.comboBoxGetDevice.setStyleSheet("QComboBox{\n"
                                     "background-color: #fff;\n"
                                     "border: 1px solid;\n"
@@ -204,13 +181,13 @@ class Ui_MainWindow(object):
                                     "\n"
                                     "}\n"
                                     "QComboBox::drop-down{\n"
-                                    "width: 30px;\n"
-                                    "height: 30px;\n"
+                                    "width: 34px;\n"
+                                    "height: 36px;\n"
                                     "top: 0px;\n"
                                     "border: 1px solid;\n"
                                     "border-left: 2px solid;\n"
                                     "border-radius: 3px;\n"
-                                    "background-color: #94C7E6;\n"
+                                    "background-color: #fff;\n"
                                     "\n"
                                     "}\n"
                                     "\n"
@@ -218,24 +195,18 @@ class Ui_MainWindow(object):
                                     "image: url(:/img/Polygon 2.svg)\n"
                                     "}\n"
                                     "")
-
         self.comboBoxGetDevice.setCurrentText("Выберите")
         self.comboBoxGetDevice.setObjectName("comboBox")
-        self.comboBoxGetDevice.activated[str].connect(self.deviceCodeChanged)
+
 
         #############################################
         
         self.lineEditAmount = QtWidgets.QLineEdit(self.centralwidget)
-        self.lineEditAmount.textChanged.connect(self.setAmount)
-        self.lineEditAmount.setGeometry(QtCore.QRect(940, 153, 220, 34))
+        self.lineEditAmount.setGeometry(QtCore.QRect(660, 150, 50, 40))
         self.lineEditAmount.setValidator(QIntValidator())
-        font = QtGui.QFont()
-        font.setFamily("Calibri")
-        font.setPointSize(10)
-        self.lineEditAmount.setFont(font)
         self.lineEditAmount.setStyleSheet("padding-left: 2px;\n"
                                     "top: 0px;\n"
-                                    "border: 1px solid;\n"
+                                    "border: 2px solid;\n"
                                     "border-radius: 3px;\n"
                                     "font-weight: 400;\n"
                                     "background-color: #fff")
@@ -243,10 +214,30 @@ class Ui_MainWindow(object):
         MainWindow.setCentralWidget(self.centralwidget)
 
         #############################################
-        
+
+        self.line = QtWidgets.QFrame(self.centralwidget)
+        self.line.setGeometry(QtCore.QRect(250, 75, 20, 250))
+        self.line.setFrameShape(QtWidgets.QFrame.VLine)
+        self.line.setFrameShadow(QtWidgets.QFrame.Sunken)
+        self.line.setObjectName("line")
+        self.line_2 = QtWidgets.QFrame(self.centralwidget)
+        self.line_2.setGeometry(QtCore.QRect(660, 270, 500, 10))
+        self.line_2.setFrameShape(QtWidgets.QFrame.HLine)
+        self.line_2.setFrameShadow(QtWidgets.QFrame.Sunken)
+        self.line_2.setObjectName("line_2")
+
+        ############################################
+        self.widgetConnect()
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
-
+    def widgetConnect(self):
+        self.lineEditAmount.textChanged.connect(self.setAmount)
+        self.comboBoxGetDevice.activated[str].connect(self.deviceCodeChanged)
+        self.buttonGetContract.clicked.connect(self.getContract)
+        self.buttonGetInput.clicked.connect(self.getInputFilesPath)
+        self.buttonGetOutput.clicked.connect(self.getOutputFilesPath)
+        self.radioButtonConsolid.toggled.connect(lambda: self.changeSecondMode())
+        self.radioButtonDevice.toggled.connect(lambda: self.changeMode(mode='device'))
     def deviceCodeChanged(self, text):
         if 1: #Нужна функция проверки наличия шаблона
             curDeviceCode = text
@@ -269,6 +260,75 @@ class Ui_MainWindow(object):
             self.radioButtonDelen.setChecked(False)
             self.radioButtonConsolid.setEnabled(False)
             self.radioButtonDelen.setEnabled(False)
+            self.buttonGetContract.setStyleSheet("border: 1px solid;\n"
+                                            "border-radius: 4px;\n"
+                                            "border-color: #B7B7B7;\n"
+                                            "background-color: #F4F4F4\n")
+            self.comboBoxGetDevice.setStyleSheet("QComboBox{\n"
+                                                 "background-color: #fff;\n"
+                                                 "border: 1px solid;\n"
+                                                 "border-radius: 4px;\n"
+                                                 "\n"
+                                                 "}\n"
+                                                 "QComboBox::drop-down{\n"
+                                                 "width: 34px;\n"
+                                                 "height: 36px;\n"
+                                                 "top: 0px;\n"
+                                                 "border: 1px solid;\n"
+                                                 "border-left: 2px solid;\n"
+                                                 "border-radius: 3px;\n"
+                                                 "background-color: #fff;\n"
+                                                 "\n"
+                                                 "}\n"
+                                                 "\n"
+                                                 "QComboBox::down-arrow{\n"
+                                                 "image: url(:/img/Polygon 2.svg)\n"
+                                                 "}\n"
+                                                 "")
+            self.lineEditAmount.setStyleSheet("padding-left: 2px;\n"
+                                              "top: 0px;\n"
+                                              "border: 2px solid;\n"
+                                              "border-radius: 3px;\n"
+                                              "font-weight: 400;\n"
+                                              "border-color: #000;\n"
+                                              "background-color: #fff")
+            self.buttonGenerate_1.setStyleSheet("QPushButton{\n"
+                                                "border: 2px solid;\n"
+                                                "color: #000;\n"
+                                                "border-color: #000;\n"
+                                                "border-radius: 6px;\n"
+                                                # "color: #848484;\n"
+                                                "\n"
+                                                "}\n"
+                                                "\n"
+                                                "")
+            self.buttonGenerate.setStyleSheet("QPushButton{\n"
+                                              "border: 2px solid;\n"
+                                              "color: #000;\n"
+                                              "border-color: #000;\n"
+                                              "border-radius: 6px;\n"
+                                              # "color: #848484;\n"
+                                              "\n"
+                                              "}\n"
+                                              "\n"
+                                              "")
+            self.buttonGenerate.setStyleSheet("QPushButton{\n"
+                                              "border: 2px solid;\n"
+                                              "color: #B7B7B7;\n"
+                                              "border-color: #B7B7B7;\n"
+                                              "border-radius: 6px;\n"
+                                              # "color: #848484;\n"
+                                              "\n"
+                                              "}\n"
+                                              "\n"
+                                              "")
+            self.buttonGetContract.setEnabled(False)
+            self.buttonGenerate.setEnabled(False)
+            self.labelContract.setEnabled(False)
+            self.comboBoxGetDevice.setEnabled(True)
+            self.labelDeviceCode.setEnabled(True)
+            self.lineEditAmount.setEnabled(True)
+            self.buttonGenerate_1.setEnabled(True)
         else:
             curMode = 'Contract'
             curSecondMode = 'Consolid'
@@ -278,13 +338,74 @@ class Ui_MainWindow(object):
             self.radioButtonDelen.setChecked(False)
             self.radioButtonConsolid.setEnabled(True)
             self.radioButtonDelen.setEnabled(True)
+            self.comboBoxGetDevice.setStyleSheet("QComboBox{\n"
+                                                 "background-color: #fff;\n"
+                                                 "border: 1px solid;\n"
+                                                 "border-radius: 4px;\n"
+                                                 "border-color: #B7B7B7;\n"
+                                                 "\n"
+                                                 "}\n"
+                                                 "QComboBox::drop-down{\n"
+                                                 "width: 34px;\n"
+                                                 "height: 36px;\n"
+                                                 "top: 0px;\n"
+                                                 "border: 1px solid;\n"
+                                                 "border-left: 2px solid;\n"
+                                                 "border-color: #B7B7B7;\n"
+                                                 "border-radius: 3px;\n"
+                                                 "background-color: #fff;\n"
+                                                 "\n"
+                                                 "}\n"
+                                                 "\n"
+                                                 "QComboBox::down-arrow{\n"
+                                                 "image: url(:/img/PolygonGray.svg)\n"
+                                                 "}\n"
+                                                 "")
+            self.buttonGetContract.setStyleSheet("border: 2px solid;\n"
+                                                 "border-radius: 4px;\n"
+                                                 "border-color: #858585;\n"
+                                                 "background-color: #D9D9D9\n")
+            self.buttonGenerate.setStyleSheet("QPushButton{\n"
+                                              "border: 2px solid;\n"
+                                              "color: #000;\n"
+                                              "border-color: #000;\n"
+                                              "border-radius: 6px;\n"
+                                              #"color: #848484;\n"
+                                              "\n"
+                                              "}\n"
+                                              "\n"
+                                              "")
+            self.buttonGenerate_1.setStyleSheet("QPushButton{\n"
+                                              "border: 2px solid;\n"
+                                              "color: #B7B7B7;\n"
+                                              "border-color: #B7B7B7;\n"
+                                              "border-radius: 6px;\n"
+                                              # "color: #848484;\n"
+                                              "\n"
+                                              "}\n"
+                                              "\n"
+                                              "")
+            self.lineEditAmount.setStyleSheet("padding-left: 2px;\n"
+                                              "top: 0px;\n"
+                                              "border: 2px solid;\n"
+                                              "border-radius: 3px;\n"
+                                              "font-weight: 400;\n"
+                                              "border-color: #B7B7B7;\n"
+                                              "background-color: #fff")
+            self.buttonGenerate.setEnabled(True)
+            self.buttonGetContract.setEnabled(True)
+            self.labelContract.setEnabled(True)
+            self.comboBoxGetDevice.setEnabled(False)
+            self.labelDeviceCode.setEnabled(False)
+            self.lineEditAmount.setEnabled(False)
+            self.buttonGenerate_1.setEnabled(False)
 
     def changeSecondMode(self):
         global curSecondMode
         if self.radioButtonConsolid.isChecked():
             curSecondMode = 'Consolid'
         else:
-            curSecondMode = 'Delen'
+            curSecondMode = 'Separate'
         print(curSecondMode)
 
 
@@ -339,12 +460,13 @@ class Ui_MainWindow(object):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
         self.buttonGenerate.setText(_translate("MainWindow", "Сгенерировать"))
+        self.buttonGenerate_1.setText(_translate("MainWindow", "Сгенерировать"))
         self.labelGetInput.setText(_translate("MainWindow", "Выбор набора шаблонов"))
         self.buttonGetOutput.setText(_translate("MainWindow", "..."))
         self.buttonGetInput.setText(_translate("MainWindow", "..."))
         self.labelGetOutput.setText(_translate("MainWindow", "Сохранять в"))
         self.labelDeviceCode.setText(_translate("MainWindow", "Выбор изделия"))
-        self.labelGetAmount.setText(_translate("MainWindow", "Количество"))
+        #self.labelGetAmount.setText(_translate("MainWindow", "Количество"))
         self.labelContract.setText(_translate("MainWindow", "Выбор договора"))
         self.buttonGetContract.setText(_translate("MainWindow", "..."))
         self.radioButtonDevice.setText(_translate("MainWindow", "Изделие"))

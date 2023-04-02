@@ -6,7 +6,7 @@ import threading
 import urllib.request
 from time import sleep
 
-ghb
+
 
 def connect(mode = 'check'):
     if mode == 'check':
