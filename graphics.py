@@ -230,6 +230,7 @@ class Ui_MainWindow(object):
         self.widgetConnect()
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
+
     def widgetConnect(self):
         self.lineEditAmount.textChanged.connect(self.setAmount)
         self.comboBoxGetDevice.activated[str].connect(self.deviceCodeChanged)
@@ -400,6 +401,15 @@ class Ui_MainWindow(object):
             self.lineEditAmount.setEnabled(False)
             self.buttonGenerate_1.setEnabled(False)
 
+    def showErrorMessagebox(self, text):
+        msg = QtWidgets.QMessageBox()
+        msg.setIcon(QtWidgets.QMessageBox.Information)
+        # setting message for Message Box
+        msg.setText(text)
+        # setting Message box window title
+        msg.setWindowTitle("Information MessageBox")
+        # start the app
+        retval = msg.exec_()
     def changeSecondMode(self):
         global curSecondMode
         if self.radioButtonConsolid.isChecked():
