@@ -258,13 +258,20 @@ class Ui_MainWindow(object):
         self.radioButtonDevice.toggled.connect(lambda: self.changeMode(mode='device'))
 
     def deviceCodeChanged(self, text):
-        if 1: #Нужна функция проверки наличия шаблона
+        connect()
+        if self.checkCodeFile(text):
             curDeviceCode = text
+            print(curDeviceCode)
         else:
+            self.comboBoxGetDevice.setCurrentIndex(0)
+            self.deviceCodeChanged(self.comboBoxGetDevice.currentText())
             self.showErrorMessagebox(text='Файл-шаблон\nотсутствует')
 
-            #Вызов окна ошибки
-            
+    def checkCodeFile(self, text):
+        if f'ВП {text}.xlsx' in devicesList or f'ВП {text}.xls' in devicesList:
+            return True
+        else:
+            return False
 
     def setAmount(self, amount):
         global curAmount
@@ -458,6 +465,7 @@ class Ui_MainWindow(object):
 
     def getContract(self):
         global contractFilePath
+        connect()
         try:
             contractFilePath = QtWidgets.QFileDialog.getOpenFileName()[0]
             if 1: # check contract file на файлы шаблоны
@@ -476,16 +484,18 @@ class Ui_MainWindow(object):
         global inputFilesPath
         global devicesList
         global devicesTxt
+        connect()
         try:
             inputFilesPath = QtWidgets.QFileDialog.getExistingDirectory()
-            if checkFilesPath(inputFilesPath):
-                devicesList = os.listdir(inputFilesPath)
-                if 'Перечень изделий ЗАО ЗЭТ.txt' in devicesList:
-                    devicesTxt = devicesList[devicesList.index('Перечень изделий ЗАО ЗЭТ.txt')]
-                    devicesList.remove('Перечень изделий ЗАО ЗЭТ.txt')
-                    self.pasteDevicesCodes(devicesList)
-                else:
-                    self.showErrorMessagebox(text='Не найден файл с\nкодами устройств')
+            if inputFilesPath!='':
+                if checkFilesPath(inputFilesPath):
+                    devicesList = os.listdir(inputFilesPath)
+                    if 'Перечень изделий ЗАО ЗЭТ.txt' in devicesList:
+                        devicesTxt = devicesList[devicesList.index('Перечень изделий ЗАО ЗЭТ.txt')]
+                        devicesList.remove('Перечень изделий ЗАО ЗЭТ.txt')
+                        self.pasteDevicesCodes(inputFilesPath)
+                    else:
+                        self.showErrorMessagebox(text='Не найден файл с\nкодами устройств')
             else:
                 inputFilesPath = ''
         except:
@@ -494,6 +504,7 @@ class Ui_MainWindow(object):
 
     def getOutputFilesPath(self):
         global outputFilesPath
+        connect()
         try:
             outputFilesPath = QtWidgets.QFileDialog.getExistingDirectory()
             if checkFilesPath(outputFilesPath):
@@ -503,9 +514,12 @@ class Ui_MainWindow(object):
         except:
             pass
 
-    def pasteDevicesCodes(self, deviceCodes):
-        for code in deviceCodes:
-            self.comboBoxGetDevice.addItem(code)
+    def pasteDevicesCodes(self, path):
+        print(path)
+        with open(f"{path}/Перечень изделий ЗАО ЗЭТ.txt", encoding='utf-8') as file:
+            for item in file:
+                self.comboBoxGetDevice.addItem(item.replace('\n',''))
+        self.deviceCodeChanged(self.comboBoxGetDevice.currentText())
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate

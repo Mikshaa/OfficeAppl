@@ -24,16 +24,9 @@ def connect(mode = 'check'):
         ui.showErrorMessagebox(mode='connection')
 '''
 
-def checkInputFilesPath(path):
-    if os.access(path, mode=os.F_OK):
-        if os.access(path, mode=os.X_OK):
-            return True
-        else:
-            ui.
-    else:
-        print(4)
-
-checkInputFilesPath('C:/Users/Michael/Desktop/test')
+with open("C:/Users/Michael/Desktop/test/Перечень изделий ЗАО ЗЭТ.txt", encoding='utf-8') as file:
+    for item in file:
+        print(item.replace('\n',''))
 
 
 
