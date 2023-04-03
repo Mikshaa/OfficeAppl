@@ -7,7 +7,7 @@ import urllib.request
 from time import sleep
 
 
-
+'''
 def connect(mode = 'check'):
     if mode == 'check':
         host = 'http://google.com'
@@ -17,21 +17,25 @@ def connect(mode = 'check'):
         return 'ModeError: parametr mode can takes "check" or "recheck"'
     try:
         urllib.request.urlopen(host)
-        return True
         connected = True
     except:
-        return False
         connected = False
     if not connected:
-        print('окно')
+        ui.showErrorMessagebox(mode='connection')
+'''
 
-higi
+def checkInputFilesPath(path):
+    if os.access(path, mode=os.F_OK):
+        if os.access(path, mode=os.X_OK):
+            return True
+        else:
+            ui.
+    else:
+        print(4)
 
-if connect():
-    print('connected')
-elif connect(mode='recheck'):
-    print('connected')
-else:
-    print('NO')
+checkInputFilesPath('C:/Users/Michael/Desktop/test')
+
+
+
 
 
