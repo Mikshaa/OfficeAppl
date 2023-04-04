@@ -9,14 +9,17 @@ import urllib
 curMode = 'Изделие'
 curSecondMode = 'Консолидация'
 curDeviceCode = 'Не выбрано'
-connection = False
 curAmount = 0
 inputFilesPath = ''
 outputFilesPath = ''
 contractFilePath = ''
 devicesList = []
-devicesTxt = ''
-
+var_0 = ''
+var_1 = ''
+var_3 = ''
+var_4 = ''
+var_5 = ''
+var_6 = ''
 
 def connect(mode = 'check'):
     if mode == 'check':
@@ -30,17 +33,67 @@ def connect(mode = 'check'):
         connected = False
     if not connected:
         ui.showErrorMessagebox(mode='connection')
+def setVarsInFormula(device_code):
+    received_variables = device_code.split('-')
+    for variable in received_variables:
+        if variable == '1':
+            var_0 = "'1'"
+        elif variable == '2':
+            var_0 = "'2'"
+        elif variable == '2и':
+            var_0 = "'2и'"
+        elif variable == '5':
+            var_0 = "'5'"
 
-def checkFilesPath(path):
-    if os.access(path, mode=os.F_OK):
-        if os.access(path, mode=os.X_OK):
-            return True
-        else:
-            ui.showErrorMessagebox(text='Нет доступа к директории')
-            return False
-    else:
-        ui.showErrorMessagebox(text='Такой директории не существует')
-        return False
+        if variable == 'Р':
+            var_1 = '"Р"'
+        elif variable == 'Э':
+            var_1 = '"Э"'
+
+        if variable == 'П':
+            var_2 = '"П"'
+        elif variable == 'Л':
+            var_2 = '"Л"'
+
+        if variable == 'Т1':
+            var_3 = "'Т1'"
+        elif variable == 'Т2':
+            var_3 = "'Т2'"
+
+        if variable.find('Ш') != -1 and variable != 'ВШ' and variable.find('КР') == -1:
+            var_4 = variable[1:]
+
+        if variable.find('В') != -1 and variable != 'ВШ' and variable.find('КР') == -1:
+            var_5 = variable[1:]
+
+        if variable.find('КР') != -1:
+            var_6 = f'"{variable}"'
+
+def generateDeviceOutuput():
+    if inputFilesPath == '':
+        ui.showErrorMessagebox(text='Отсутствует директория\nс файлами-шаблонов')
+        return
+    if outputFilesPath == '':
+        ui.showErrorMessagebox(text='Отсутствует директория\nсохранения файлов')
+        return
+    if curAmount == 0:
+        ui.showErrorMessagebox(text='Количесто устройств\n<1')
+        return
+    if f'ВП {curDeviceCode}.xlsx' in devicesList or f'ВП {curDeviceCode}.xls' not in devicesList:
+        ui.showErrorMessagebox(text='Файл-шаблон\nотсутствует')
+        return
+
+
+
+
+
+'''
+formula = formula.replace('П1', drive_type)
+formula = formula.replace('П2', location_type)
+formula = formula.replace('П3', bracing_type)
+formula = formula.replace('В', height)
+formula = formula.replace('Ш', width)
+'''
 
 
 class Ui_MainWindow(object):
@@ -258,20 +311,14 @@ class Ui_MainWindow(object):
         self.radioButtonDevice.toggled.connect(lambda: self.changeMode(mode='device'))
 
     def deviceCodeChanged(self, text):
-        connect()
-        if self.checkCodeFile(text):
+        if f'ВП {text}.xlsx' in devicesList or f'ВП {text}.xls' in devicesList:
             curDeviceCode = text
-            print(curDeviceCode)
+            setVarsInFormula(curDeviceCode)
         else:
             self.comboBoxGetDevice.setCurrentIndex(0)
             self.deviceCodeChanged(self.comboBoxGetDevice.currentText())
             self.showErrorMessagebox(text='Файл-шаблон\nотсутствует')
 
-    def checkCodeFile(self, text):
-        if f'ВП {text}.xlsx' in devicesList or f'ВП {text}.xls' in devicesList:
-            return True
-        else:
-            return False
 
     def setAmount(self, amount):
         global curAmount
@@ -427,33 +474,6 @@ class Ui_MainWindow(object):
             self.lineEditAmount.setEnabled(False)
             self.buttonGenerate_1.setEnabled(False)
 
-    def showErrorMessagebox(self, mode='default',text=''):
-        msg = QtWidgets.QMessageBox()
-        msg.setIcon(QtWidgets.QMessageBox.Critical)
-        #msg.setIcon(QtWidgets.QMessageBox.Information)
-        msg.setText(text)
-        msg.setWindowTitle("Information MessageBox")
-        if mode == 'default':
-            retval = msg.exec_()
-        elif mode == 'connection':
-            msg.setIcon(QtWidgets.QMessageBox.Warning)
-            text = 'Отсутствует\nинтернет-соединение'
-            msg.setStandardButtons(QtWidgets.QMessageBox.Retry | QtWidgets.QMessageBox.Ok)
-            buttonRetry = msg.button(QtWidgets.QMessageBox.Retry)
-            msg.setText(text)
-            buttonRetry.setText('Повторить')
-            retval = msg.exec_()
-            if retval == QtWidgets.QMessageBox.Retry:
-                connect(mode='recheck')
-    def showFinalMessage(self):
-        msg = QtWidgets.QMessageBox()
-        msg.setIcon(QtWidgets.QMessageBox.Information)
-        msg.setText('Файл сгенерирован')
-        msg.setWindowTitle("Готово")
-        retval = msg.exec_()
-
-
-
     def changeSecondMode(self):
         global curSecondMode
         if self.radioButtonConsolid.isChecked():
@@ -465,7 +485,6 @@ class Ui_MainWindow(object):
 
     def getContract(self):
         global contractFilePath
-        connect()
         try:
             contractFilePath = QtWidgets.QFileDialog.getOpenFileName()[0]
             if 1: # check contract file на файлы шаблоны
@@ -483,15 +502,12 @@ class Ui_MainWindow(object):
     def getInputFilesPath(self):
         global inputFilesPath
         global devicesList
-        global devicesTxt
-        connect()
         try:
             inputFilesPath = QtWidgets.QFileDialog.getExistingDirectory()
             if inputFilesPath!='':
-                if checkFilesPath(inputFilesPath):
+                if self.checkFilesPath(inputFilesPath):
                     devicesList = os.listdir(inputFilesPath)
                     if 'Перечень изделий ЗАО ЗЭТ.txt' in devicesList:
-                        devicesTxt = devicesList[devicesList.index('Перечень изделий ЗАО ЗЭТ.txt')]
                         devicesList.remove('Перечень изделий ЗАО ЗЭТ.txt')
                         self.pasteDevicesCodes(inputFilesPath)
                     else:
@@ -504,22 +520,58 @@ class Ui_MainWindow(object):
 
     def getOutputFilesPath(self):
         global outputFilesPath
-        connect()
         try:
             outputFilesPath = QtWidgets.QFileDialog.getExistingDirectory()
-            if checkFilesPath(outputFilesPath):
+            if self.checkFilesPath(outputFilesPath):
                 pass
             else:
                 outputFilesPath = ''
         except:
             pass
 
+    def checkFilesPath(self, path):
+        if os.access(path, mode=os.F_OK):
+            if os.access(path, mode=os.X_OK):
+                return True
+            else:
+                self.showErrorMessagebox(text='Нет доступа к директории')
+                return False
+        else:
+            self.showErrorMessagebox(text='Такой директории не существует')
+            return False
+
     def pasteDevicesCodes(self, path):
-        print(path)
         with open(f"{path}/Перечень изделий ЗАО ЗЭТ.txt", encoding='utf-8') as file:
             for item in file:
                 self.comboBoxGetDevice.addItem(item.replace('\n',''))
         self.deviceCodeChanged(self.comboBoxGetDevice.currentText())
+
+    def showErrorMessagebox(self, mode='default', text=''):
+        msg = QtWidgets.QMessageBox()
+        msg.setIcon(QtWidgets.QMessageBox.Critical)
+        # msg.setIcon(QtWidgets.QMessageBox.Information)
+        msg.setText(text)
+        msg.setWindowTitle("Information MessageBox")
+        if mode == 'default':
+            retval = msg.exec_()
+        elif mode == 'connection':
+            msg.setIcon(QtWidgets.QMessageBox.Warning)
+            text = 'Отсутствует\nинтернет-соединение'
+            msg.setStandardButtons(QtWidgets.QMessageBox.Retry | QtWidgets.QMessageBox.Ok)
+            buttonRetry = msg.button(QtWidgets.QMessageBox.Retry)
+            msg.setText(text)
+            buttonRetry.setText('Повторить')
+            retval = msg.exec_()
+            if retval == QtWidgets.QMessageBox.Retry:
+                connect(mode='recheck')
+
+    def showFinalMessage(self):
+        msg = QtWidgets.QMessageBox()
+        msg.setIcon(QtWidgets.QMessageBox.Information)
+        msg.setText('Файл сгенерирован')
+        msg.setWindowTitle("Готово")
+        retval = msg.exec_()
+
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
