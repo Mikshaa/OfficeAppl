@@ -4,22 +4,34 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtGui import * 
 from PyQt5.QtCore import *
 import urllib
+import xlwings
+import pandas as pe
+import openpyxl
+import datetime
 
 
-curMode = 'Изделие'
-curSecondMode = 'Консолидация'
-curDeviceCode = 'Не выбрано'
+curMode = 'Device'
+curSecondMode = 'Consolid'
+curDeviceCode = ''
 curAmount = 0
+curFile = ''
+
 inputFilesPath = ''
 outputFilesPath = ''
 contractFilePath = ''
+
 devicesList = []
-var_0 = ''
+
+
 var_1 = ''
+var_2 = ''
 var_3 = ''
 var_4 = ''
 var_5 = ''
 var_6 = ''
+
+checkForFormula = ['A', 'I', 'U', 'E', 'X', 'K', 'L', 'O', '', 'S', 'G']
+checkDeviceCode = True
 
 def connect(mode = 'check'):
     if mode == 'check':
@@ -33,70 +45,142 @@ def connect(mode = 'check'):
         connected = False
     if not connected:
         ui.showErrorMessagebox(mode='connection')
-def setVarsInFormula(device_code):
+def setVars(device_code):
+    print(device_code)
     received_variables = device_code.split('-')
-    for variable in received_variables:
-        if variable == '1':
-            var_0 = "'1'"
-        elif variable == '2':
-            var_0 = "'2'"
-        elif variable == '2и':
-            var_0 = "'2и'"
-        elif variable == '5':
-            var_0 = "'5'"
+    global var_1, var_2, var_3, var_4, var_5, var_6, checkDeviceCode
+    checkDeviceCode = True
+    if received_variables[2] == 'Р':
+        var_1 = '"Р"'
+    elif received_variables[2] == 'Э':
+        var_1 = '"Э"'
+    else:
+        checkDeviceCode = False
+        ui.showErrorMessagebox(text='Неправильно указан\nтип привода')
+        return
 
-        if variable == 'Р':
-            var_1 = '"Р"'
-        elif variable == 'Э':
-            var_1 = '"Э"'
+    if received_variables[3] == 'П':
+        var_2 = '"П"'
+    elif received_variables[3] == 'Л':
+        var_2 = '"Л"'
+    else:
+        checkDeviceCode = False
+        ui.showErrorMessagebox(text='Неправильно указана\nсторона исполнения')
+        return
 
-        if variable == 'П':
-            var_2 = '"П"'
-        elif variable == 'Л':
-            var_2 = '"Л"'
+    if received_variables[4] == 'Т1':
+        var_3 = '"Т1"'
+    elif received_variables[4] == 'Т2':
+        var_3 = '"Т2"'
+    else:
+        checkDeviceCode = False
+        ui.showErrorMessagebox(text='Неправильно указан\nтип ткани')
+        return
 
-        if variable == 'Т1':
-            var_3 = "'Т1'"
-        elif variable == 'Т2':
-            var_3 = "'Т2'"
+    if received_variables[5][0]=='Ш':
+        var_4 = received_variables[5][1:]
+        if int(var_4)>0 and int(var_4)<=240:
+            pass
+        else:
+            checkDeviceCode = False
+            ui.showErrorMessagebox(text='Неправильно указана\nширина')
+            return
+    else:
+        checkDeviceCode = False
+        ui.showErrorMessagebox(text='Неправильно указана\nширина1')
+        return
 
-        if variable.find('Ш') != -1 and variable != 'ВШ' and variable.find('КР') == -1:
-            var_4 = variable[1:]
 
-        if variable.find('В') != -1 and variable != 'ВШ' and variable.find('КР') == -1:
-            var_5 = variable[1:]
+    if received_variables[6][0]=='В':
+        var_5 = received_variables[6][1:]
+        if int(var_5)>0 and int(var_5)<=500:
+            pass
+        else:
+            checkDeviceCode = False
+            ui.showErrorMessagebox(text='Неправильно указана\nвысота')
+            return
+    else:
+        checkDeviceCode = False
+        ui.showErrorMessagebox(text='Неправильно указана\nвысота')
+        return
 
-        if variable.find('КР') != -1:
-            var_6 = f'"{variable}"'
-
+    if received_variables[7] == 'КР1':
+        var_6 = '"КР1"'
+    elif received_variables[7]=='КР2':
+        var_6 = '"КР2"'
+    else:
+        checkDeviceCode = False
+        ui.showErrorMessagebox(text='Неправильно указан\nтип крепления')
+        return
 def generateDeviceOutuput():
+    global curDeviceCode
+    global devicesList
+    global checkDeviceCode
+    ui.deviceCodeChanged(ui.comboBoxGetDevice.currentText())
+    if not checkDeviceCode:
+        return
     if inputFilesPath == '':
         ui.showErrorMessagebox(text='Отсутствует директория\nс файлами-шаблонов')
         return
     if outputFilesPath == '':
         ui.showErrorMessagebox(text='Отсутствует директория\nсохранения файлов')
         return
-    if curAmount == 0:
+    if int(curAmount) < 1:
         ui.showErrorMessagebox(text='Количесто устройств\n<1')
         return
-    if f'ВП {curDeviceCode}.xlsx' in devicesList or f'ВП {curDeviceCode}.xls' not in devicesList:
-        ui.showErrorMessagebox(text='Файл-шаблон\nотсутствует')
+    if curDeviceCode == '':
         return
+    peData = pe.DataFrame(pe.read_excel(f'{inputFilesPath}/{curFile}'),columns=['Наименование ВП', 'Количество', 'Примечание'])
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    for row in range(len(peData)):
+        if str(peData['Примечание'][row]) == 'nan':
+            ws[f'A{row + 1}'] = str(peData['Наименование ВП'][row])
+            ws[f'B{row + 1}'] = float(peData['Количество'][row]) * int(curAmount)
+        else:
+            if str(peData['Количество'][row]) != 'nan':
+                ws[f'A{row + 1}'] = str(peData['Наименование ВП'][row])
+                ws[f'B{row + 1}'] = float(peData['Количество'][row]) * int(curAmount)
+            ws[f'A{row + 1}'] = str(peData['Наименование ВП'][row])
+            ws[f'B{row + 1}'] = pasteVarsInFormula(str(peData['Примечание'][row]))
+    finalSavePath = f'{outputFilesPath}/{curDeviceCode}_{datetime.datetime.now().strftime("%Y-%m-%d")}_{curAmount}.xlsx'
+    wb.save(finalSavePath)
+    row= 1
+    app = xlwings.App(visible=False)
+    wb = app.books.open(finalSavePath)
+    ws = wb.sheets[0]
+    while row<len(peData)+1:
+        if ws.range(f'b{row}').value == 0:
+            ws.range(f'a{row}').delete(shift='up')
+            ws.range(f'b{row}').delete(shift='up')
+        else:
+            if isinstance(ws.range(f'b{row}').value, float):
+                ws.range(f'b{row}').value = round(ws.range(f'b{row}').value, 1)
+            ws.range(f'b{row}').value = ws.range(f'b{row}').value
+            row += 1
+    wb.save()
+    wb.close()
+    app.quit()
+    ui.showFinalMessage()
 
+def pasteVarsInFormula(formula):
+    formula = formula.replace('П1', var_1)
+    formula = formula.replace('П2', var_2)
+    formula = formula.replace('П3', var_3)
+    formula = formula.replace('Ш', var_4)
+    formula = formula.replace('В', var_5)
+    formula = formula.replace('П6', var_6)
+    for i in range(1,len(formula)):
+        if formula[i] == 'N' and formula[i-1] not in checkForFormula:
+            formula = formula.replace('N', curAmount)
+    formula = formula.replace(';', ',')
+    formula = f'=({formula})*{curAmount}'
+    return formula
 
-
-
-
-'''
-formula = formula.replace('П1', drive_type)
-formula = formula.replace('П2', location_type)
-formula = formula.replace('П3', bracing_type)
-formula = formula.replace('В', height)
-formula = formula.replace('Ш', width)
-'''
 
 
 class Ui_MainWindow(object):
+
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.setFixedSize(1200, 400)
@@ -267,7 +351,7 @@ class Ui_MainWindow(object):
                                     "")
         self.comboBoxGetDevice.setCurrentText("Выберите")
         self.comboBoxGetDevice.setObjectName("comboBox")
-
+        self.comboBoxGetDevice.setEditable(True)
 
         #############################################
         
@@ -303,21 +387,38 @@ class Ui_MainWindow(object):
 
     def widgetConnect(self):
         self.lineEditAmount.textChanged.connect(self.setAmount)
-        self.comboBoxGetDevice.activated[str].connect(self.deviceCodeChanged)
+        #self.comboBoxGetDevice.activated[str].connect(self.deviceCodeChanged)
         self.buttonGetContract.clicked.connect(self.getContract)
         self.buttonGetInput.clicked.connect(self.getInputFilesPath)
         self.buttonGetOutput.clicked.connect(self.getOutputFilesPath)
         self.radioButtonConsolid.toggled.connect(lambda: self.changeSecondMode())
         self.radioButtonDevice.toggled.connect(lambda: self.changeMode(mode='device'))
+        self.buttonGenerate_1.clicked.connect(generateDeviceOutuput)
+
 
     def deviceCodeChanged(self, text):
-        if f'ВП {text}.xlsx' in devicesList or f'ВП {text}.xls' in devicesList:
-            curDeviceCode = text
-            setVarsInFormula(curDeviceCode)
+        global curDeviceCode, curFile
+        if text.split('-')[0] == 'ВШ':
+            for file in devicesList:
+                if f'ВП {text.split("-")[0]}-{text.split("-")[1]}' in file or f'ВП {text.split("-")[0]}-{text.split("-")[1]}' in file:
+                    curDeviceCode = text
+                    curFile = file
+                    break
+                else:
+                    curDeviceCode = ''
+            setVars(curDeviceCode)
+            if curDeviceCode == '':
+                self.showErrorMessagebox(text='Файл-шаблон\nотсутствует')
         else:
-            self.comboBoxGetDevice.setCurrentIndex(0)
-            self.deviceCodeChanged(self.comboBoxGetDevice.currentText())
-            self.showErrorMessagebox(text='Файл-шаблон\nотсутствует')
+            for file in devicesList:
+                if f'ВП {text}.xlsx' == file or f'ВП {text}.xls' == file:
+                    curDeviceCode = text
+                    curFile = file
+                    break
+                else:
+                    curDeviceCode = ''
+            if curDeviceCode == '':
+                self.showErrorMessagebox(text='Файл-шаблон\nотсутствует')
 
 
     def setAmount(self, amount):
@@ -544,7 +645,7 @@ class Ui_MainWindow(object):
         with open(f"{path}/Перечень изделий ЗАО ЗЭТ.txt", encoding='utf-8') as file:
             for item in file:
                 self.comboBoxGetDevice.addItem(item.replace('\n',''))
-        self.deviceCodeChanged(self.comboBoxGetDevice.currentText())
+        #self.deviceCodeChanged(self.comboBoxGetDevice.currentText())
 
     def showErrorMessagebox(self, mode='default', text=''):
         msg = QtWidgets.QMessageBox()
@@ -590,6 +691,7 @@ class Ui_MainWindow(object):
         self.radioButtonContract.setText(_translate("MainWindow", "Договор"))
         self.radioButtonConsolid.setText(_translate("MainWindow", "Консолидация"))
         self.radioButtonDelen.setText(_translate("MainWindow", "Деление"))
+
 
 
 if __name__ == "__main__":
