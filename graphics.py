@@ -4,10 +4,11 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtGui import * 
 from PyQt5.QtCore import *
 import urllib
-import xlwings, xlrd
+import xlwings
 import pandas as pe
 import openpyxl
 import datetime
+import xlrd
 
 
 curMode = 'Device'
@@ -20,6 +21,7 @@ inputFilesPath = ''
 outputFilesPath = ''
 contractFilePath = ''
 curContractFile = ''
+contractDevices = []
 
 devicesList = []
 
@@ -119,6 +121,7 @@ def generateDeviceOutuput(mode='device', contractAmount = None):
     global devicesList
     global checkDeviceCode
     global curAmount
+    global contractDevices
     if mode == 'device':
         curAmount = ui.lineEditAmount.text()
         ui.deviceCodeChanged(ui.comboBoxGetDevice.currentText(), mode='device')
@@ -156,6 +159,8 @@ def generateDeviceOutuput(mode='device', contractAmount = None):
                 ws[f'B{row + 1}'] = pasteVarsInFormula(str(peData['Примечание'][row]))
     finalSavePath = f'{outputFilesPath}/{curDeviceCode}_{datetime.datetime.now().strftime("%Y-%m-%d")}_{curAmount}.xlsx'
     wb.save(finalSavePath)
+    if mode=='contract':
+        contractDevices.append(finalSavePath)
     row= 1
     app = xlwings.App(visible=False)
     wb = app.books.open(finalSavePath)
@@ -176,7 +181,7 @@ def generateDeviceOutuput(mode='device', contractAmount = None):
         ui.showFinalMessage()
 
 def genarateContractOutput():
-    global curContractFile, contractFilePath, curSecondMode, curDeviceCode, zeroError, contractFilesError
+    global curContractFile, contractFilePath, curSecondMode, curDeviceCode, zeroError, contractFilesError, contractDevices
     filesError = False
     contractData = pe.DataFrame(pe.read_excel(contractFilePath,header=None))
     app = xlwings.App(visible=False)
@@ -205,7 +210,46 @@ def genarateContractOutput():
         contractAmount = contractData[1][row]
         ui.deviceCodeChanged(deviceCode)
         generateDeviceOutuput(mode='contract', contractAmount=contractAmount)
-    ui.showFinalMessage()
+    if curSecondMode == 'Separate':
+        ui.showFinalMessage()
+    elif curSecondMode == 'Consolid':
+        #wb_final = openpyxl.Workbook()
+        #ws_final = wb_final.active
+        wbDataFrames = []
+        for device in contractDevices:
+            wbData = pe.DataFrame(pe.read_excel(device,header=None))
+            wbDataFrames.append(wbData)
+        wbDataFinal = wbDataFrames[0]
+        print(wbDataFinal)
+        wbDataFinalList = wbDataFinal[0].tolist()
+        del wbDataFrames[0]
+        for i in wbDataFrames:
+            for j in range(len(i)):
+                if i[0][j] in wbDataFinalList:
+                    wbDataFinal[1][wbDataFinalList.index(i[0][j])] = float(i[1][j])+float(wbDataFinal[1][wbDataFinalList.index(i[0][j])])
+                else:
+                    wbDataFinal.loc[len(wbDataFinal.index)] = [str(i[0][j]), str(i[1][j])]
+                    wbDataFinalList.append(str(i[0][j]))
+        wb_final = openpyxl.Workbook()
+        ws_final = wb_final.active
+        for i in range(len(wbDataFinal)):
+            ws_final[f'A{i+1}'] = wbDataFinal[0][i]
+            ws_final[f'B{i+1}'] = wbDataFinal[1][i]
+        wb_final.save(f'{outputFilesPath}/консолид.xlsx')
+'''
+            for row in range(len(wbData)):
+                row_final = 1
+                while str(ws_final[f'A{row_final}']) != 'nan':
+                    if str(ws_final[f'A{row_final}']) == wbData[0][row]:
+                        ws_final[f'B{row_final}'] = float(ws_final[f'B{row_final}'].value)+wbData[1][row]
+                else:
+                    ws_final[f'A{row_final}'] = wbData[0][row]
+                    ws_final[f'B{row_final}'] = wbData[1][row]
+            #os.remove(device)
+        wb.save(f'{outputFilesPath}_консолид.xlsx')
+        ui.showFinalMessage()
+            '''
+
 
 
 
