@@ -4,7 +4,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtGui import * 
 from PyQt5.QtCore import *
 import urllib
-import xlwings
+import xlwings, xlrd
 import pandas as pe
 import openpyxl
 import datetime
@@ -19,6 +19,7 @@ curFile = ''
 inputFilesPath = ''
 outputFilesPath = ''
 contractFilePath = ''
+curContractFile = ''
 
 devicesList = []
 
@@ -32,6 +33,8 @@ var_6 = ''
 
 checkForFormula = ['A', 'I', 'U', 'E', 'X', 'K', 'L', 'O', '', 'S', 'G']
 checkDeviceCode = True
+zeroError = False
+contractFilesError = False
 
 def connect(mode = 'check'):
     if mode == 'check':
@@ -46,7 +49,6 @@ def connect(mode = 'check'):
     if not connected:
         ui.showErrorMessagebox(mode='connection')
 def setVars(device_code):
-    print(device_code)
     received_variables = device_code.split('-')
     global var_1, var_2, var_3, var_4, var_5, var_6, checkDeviceCode
     checkDeviceCode = True
@@ -112,11 +114,19 @@ def setVars(device_code):
         checkDeviceCode = False
         ui.showErrorMessagebox(text='Неправильно указан\nтип крепления')
         return
-def generateDeviceOutuput():
+def generateDeviceOutuput(mode='device', contractAmount = None):
     global curDeviceCode
     global devicesList
     global checkDeviceCode
-    ui.deviceCodeChanged(ui.comboBoxGetDevice.currentText())
+    global curAmount
+    if mode == 'device':
+        curAmount = ui.lineEditAmount.text()
+        ui.deviceCodeChanged(ui.comboBoxGetDevice.currentText(), mode='device')
+    elif mode == 'contract':
+        curAmount = contractAmount
+    checkZeros(mode='device')
+    if zeroError:
+        return
     if not checkDeviceCode:
         return
     if inputFilesPath == '':
@@ -141,8 +151,9 @@ def generateDeviceOutuput():
             if str(peData['Количество'][row]) != 'nan':
                 ws[f'A{row + 1}'] = str(peData['Наименование ВП'][row])
                 ws[f'B{row + 1}'] = float(peData['Количество'][row]) * int(curAmount)
-            ws[f'A{row + 1}'] = str(peData['Наименование ВП'][row])
-            ws[f'B{row + 1}'] = pasteVarsInFormula(str(peData['Примечание'][row]))
+            else:
+                ws[f'A{row + 1}'] = str(peData['Наименование ВП'][row])
+                ws[f'B{row + 1}'] = pasteVarsInFormula(str(peData['Примечание'][row]))
     finalSavePath = f'{outputFilesPath}/{curDeviceCode}_{datetime.datetime.now().strftime("%Y-%m-%d")}_{curAmount}.xlsx'
     wb.save(finalSavePath)
     row= 1
@@ -161,7 +172,46 @@ def generateDeviceOutuput():
     wb.save()
     wb.close()
     app.quit()
+    if mode=='device':
+        ui.showFinalMessage()
+
+def genarateContractOutput():
+    global curContractFile, contractFilePath, curSecondMode, curDeviceCode, zeroError, contractFilesError
+    filesError = False
+    contractData = pe.DataFrame(pe.read_excel(contractFilePath,header=None))
+    app = xlwings.App(visible=False)
+    wb = app.books.open(f'{contractFilePath}')
+    ws = wb.sheets[0]
+    for row in range(len(contractData)):
+        curDeviceCode = contractData[0][row]
+        ui.deviceCodeChanged(curDeviceCode, mode='contract')
+        if contractFilesError:
+            ws.range(f'a{row + 1}:b{row + 1}').color = (201, 40, 40)
+            filesError = True
+    wb.save()
+    wb.close()
+    app.quit()
+    if filesError:
+        ui.showErrorMessagebox(text='Файл-шаблон\nотсутствует')
+        app = xlwings.App(visible=True, add_book=False)
+        wb = app.books.open(f'{contractFilePath}')
+        return
+
+    checkZeros(mode='contract')
+    if zeroError:
+        return
+    for row in range(len(contractData)):
+        deviceCode = contractData[0][row]
+        contractAmount = contractData[1][row]
+        ui.deviceCodeChanged(deviceCode)
+        generateDeviceOutuput(mode='contract', contractAmount=contractAmount)
     ui.showFinalMessage()
+
+
+
+
+
+
 
 def pasteVarsInFormula(formula):
     formula = formula.replace('П1', var_1)
@@ -177,7 +227,44 @@ def pasteVarsInFormula(formula):
     formula = f'=({formula})*{curAmount}'
     return formula
 
-
+def checkZeros(mode = 'device'):
+    global curMode
+    global zeroError
+    global contractFilePath
+    if mode == 'device':
+        zeroError = False
+        peDatas = pe.DataFrame(pe.read_excel(f'{inputFilesPath}/{curFile}'),columns=['Количество'])
+        app = xlwings.App(visible=False)
+        wb = app.books.open(f'{inputFilesPath}/{curFile}')
+        ws = wb.sheets[0]
+        for row in range(len(peDatas['Количество'])):
+            if peDatas['Количество'][row] == 0.0 or isinstance(peDatas['Количество'][row], str):
+                zeroError = True
+                ws.range(f'a{row + 2}:k{row+2}').color = (201, 40, 40)
+        wb.save()
+        wb.close()
+        app.quit()
+        if zeroError:
+            ui.showErrorMessagebox(text='Некорректное значение\nв файле шаблона')
+            app = xlwings.App(visible=True,add_book=False)
+            wb = app.books.open(f'{inputFilesPath}/{curFile}')
+    elif mode == 'contract':
+        zeroError = False
+        peDatas = pe.DataFrame(pe.read_excel(f'{contractFilePath}',header=None))
+        app = xlwings.App(visible=False)
+        wb = app.books.open(f'{contractFilePath}')
+        ws = wb.sheets[0]
+        for row in range(len(peDatas[1])):
+            if peDatas[1][row]==0.0 or isinstance(peDatas[1][row], str):
+                zeroError = True
+                ws.range(f'a{row+1}:b{row+1}').color = (201,40,40)
+        wb.save()
+        wb.close()
+        app.quit()
+        if zeroError:
+            ui.showErrorMessagebox(text='Некорректное значение\nв файле договора')
+            app = xlwings.App(visible=True,add_book=False)
+            wb = app.books.open(f'{contractFilePath}')
 
 class Ui_MainWindow(object):
 
@@ -386,18 +473,18 @@ class Ui_MainWindow(object):
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def widgetConnect(self):
-        self.lineEditAmount.textChanged.connect(self.setAmount)
-        #self.comboBoxGetDevice.activated[str].connect(self.deviceCodeChanged)
         self.buttonGetContract.clicked.connect(self.getContract)
         self.buttonGetInput.clicked.connect(self.getInputFilesPath)
         self.buttonGetOutput.clicked.connect(self.getOutputFilesPath)
         self.radioButtonConsolid.toggled.connect(lambda: self.changeSecondMode())
         self.radioButtonDevice.toggled.connect(lambda: self.changeMode(mode='device'))
-        self.buttonGenerate_1.clicked.connect(generateDeviceOutuput)
+        self.buttonGenerate_1.clicked.connect(lambda: generateDeviceOutuput(mode='device'))
+        self.buttonGenerate.clicked.connect(genarateContractOutput)
 
 
-    def deviceCodeChanged(self, text):
-        global curDeviceCode, curFile
+    def deviceCodeChanged(self, text, mode = 'device'):
+        global curDeviceCode, curFile, contractFilesError
+        contractFilesError = False
         if text.split('-')[0] == 'ВШ':
             for file in devicesList:
                 if f'ВП {text.split("-")[0]}-{text.split("-")[1]}' in file or f'ВП {text.split("-")[0]}-{text.split("-")[1]}' in file:
@@ -408,7 +495,10 @@ class Ui_MainWindow(object):
                     curDeviceCode = ''
             setVars(curDeviceCode)
             if curDeviceCode == '':
-                self.showErrorMessagebox(text='Файл-шаблон\nотсутствует')
+                if mode == 'device':
+                    self.showErrorMessagebox(text='Файл-шаблон\nотсутствует')
+                else:
+                    contractFilesError = True
         else:
             for file in devicesList:
                 if f'ВП {text}.xlsx' == file or f'ВП {text}.xls' == file:
@@ -418,12 +508,13 @@ class Ui_MainWindow(object):
                 else:
                     curDeviceCode = ''
             if curDeviceCode == '':
-                self.showErrorMessagebox(text='Файл-шаблон\nотсутствует')
+                if mode == 'device':
+                    self.showErrorMessagebox(text='Файл-шаблон\nотсутствует')
+                else:
+                    contractFilesError = True
 
 
-    def setAmount(self, amount):
-        global curAmount
-        curAmount = amount
+
 
     def changeMode(self, mode):
         global curMode
@@ -585,27 +676,23 @@ class Ui_MainWindow(object):
 
 
     def getContract(self):
-        global contractFilePath
+        global contractFilePath, curContractFile
         try:
-            contractFilePath = QtWidgets.QFileDialog.getOpenFileName()[0]
-            if 1: # check contract file на файлы шаблоны
-                if 1: # check zeros in contract
-                    pass
-                else:
-                    contractFilePath = ''
-                    self.showErrorMessagebox(text='В файле-шоблоне\nнайдены нули')
-            else:
-                contractFilePath = ''
-                self.showErrorMessagebox(text='Не найден файл шаблона')
+            filePath = QtWidgets.QFileDialog.getOpenFileName()[0]
         except:
             pass
+        if filePath!='':
+            contractFilePath = filePath
+            curContractFile = contractFilePath[contractFilePath.rfind('/') + 1:]
+
 
     def getInputFilesPath(self):
         global inputFilesPath
         global devicesList
         try:
-            inputFilesPath = QtWidgets.QFileDialog.getExistingDirectory()
-            if inputFilesPath!='':
+            filesPath = QtWidgets.QFileDialog.getExistingDirectory()
+            if filesPath!='':
+                inputFilesPath=filesPath
                 if self.checkFilesPath(inputFilesPath):
                     devicesList = os.listdir(inputFilesPath)
                     if 'Перечень изделий ЗАО ЗЭТ.txt' in devicesList:
@@ -613,8 +700,7 @@ class Ui_MainWindow(object):
                         self.pasteDevicesCodes(inputFilesPath)
                     else:
                         self.showErrorMessagebox(text='Не найден файл с\nкодами устройств')
-            else:
-                inputFilesPath = ''
+                        self.comboBoxGetDevice.clear()
         except:
             pass
 
@@ -622,11 +708,13 @@ class Ui_MainWindow(object):
     def getOutputFilesPath(self):
         global outputFilesPath
         try:
-            outputFilesPath = QtWidgets.QFileDialog.getExistingDirectory()
-            if self.checkFilesPath(outputFilesPath):
-                pass
-            else:
-                outputFilesPath = ''
+            filesPath = QtWidgets.QFileDialog.getExistingDirectory()
+            if filesPath!='':
+                outputFilesPath = filesPath
+                if self.checkFilesPath(outputFilesPath):
+                    pass
+                else:
+                    outputFilesPath = ''
         except:
             pass
 
