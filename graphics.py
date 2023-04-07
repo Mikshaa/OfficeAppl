@@ -211,44 +211,30 @@ def genarateContractOutput():
         ui.deviceCodeChanged(deviceCode)
         generateDeviceOutuput(mode='contract', contractAmount=contractAmount)
     if curSecondMode == 'Separate':
-        ui.showFinalMessage()
+        ui.showFinalMessage(text='Файлы сгенерированы')
     elif curSecondMode == 'Consolid':
-        #wb_final = openpyxl.Workbook()
-        #ws_final = wb_final.active
         wbDataFrames = []
         for device in contractDevices:
             wbData = pe.DataFrame(pe.read_excel(device,header=None))
             wbDataFrames.append(wbData)
+            os.remove(device)
         wbDataFinal = wbDataFrames[0]
-        print(wbDataFinal)
         wbDataFinalList = wbDataFinal[0].tolist()
+        wbValues = wbDataFinal[1].tolist()
         del wbDataFrames[0]
         for i in wbDataFrames:
             for j in range(len(i)):
                 if i[0][j] in wbDataFinalList:
-                    wbDataFinal[1][wbDataFinalList.index(i[0][j])] = float(i[1][j])+float(wbDataFinal[1][wbDataFinalList.index(i[0][j])])
+                    wbValues[wbDataFinalList.index(i[0][j])] = float(i[1][j])+float(wbValues[wbDataFinalList.index(i[0][j])])
                 else:
-                    wbDataFinal.loc[len(wbDataFinal.index)] = [str(i[0][j]), str(i[1][j])]
                     wbDataFinalList.append(str(i[0][j]))
+                    wbValues.append(float(i[1][j]))
         wb_final = openpyxl.Workbook()
         ws_final = wb_final.active
-        for i in range(len(wbDataFinal)):
-            ws_final[f'A{i+1}'] = wbDataFinal[0][i]
-            ws_final[f'B{i+1}'] = wbDataFinal[1][i]
+        for i in range(len(wbDataFinalList)):
+            ws_final[f'A{i+1}'] = wbDataFinalList[i]
+            ws_final[f'B{i+1}'] = wbValues[i]
         wb_final.save(f'{outputFilesPath}/консолид.xlsx')
-'''
-            for row in range(len(wbData)):
-                row_final = 1
-                while str(ws_final[f'A{row_final}']) != 'nan':
-                    if str(ws_final[f'A{row_final}']) == wbData[0][row]:
-                        ws_final[f'B{row_final}'] = float(ws_final[f'B{row_final}'].value)+wbData[1][row]
-                else:
-                    ws_final[f'A{row_final}'] = wbData[0][row]
-                    ws_final[f'B{row_final}'] = wbData[1][row]
-            #os.remove(device)
-        wb.save(f'{outputFilesPath}_консолид.xlsx')
-        ui.showFinalMessage()
-            '''
 
 
 
@@ -277,38 +263,37 @@ def checkZeros(mode = 'device'):
     global contractFilePath
     if mode == 'device':
         zeroError = False
+        rowsNum = []
         peDatas = pe.DataFrame(pe.read_excel(f'{inputFilesPath}/{curFile}'),columns=['Количество'])
-        app = xlwings.App(visible=False)
-        wb = app.books.open(f'{inputFilesPath}/{curFile}')
-        ws = wb.sheets[0]
         for row in range(len(peDatas['Количество'])):
             if peDatas['Количество'][row] == 0.0 or isinstance(peDatas['Количество'][row], str):
                 zeroError = True
-                ws.range(f'a{row + 2}:k{row+2}').color = (201, 40, 40)
-        wb.save()
-        wb.close()
-        app.quit()
+                rowsNum.append(row+2)
         if zeroError:
             ui.showErrorMessagebox(text='Некорректное значение\nв файле шаблона')
-            app = xlwings.App(visible=True,add_book=False)
+            app = xlwings.App(visible=True, add_book=False)
             wb = app.books.open(f'{inputFilesPath}/{curFile}')
+            ws = wb.sheets[0]
+            for row in rowsNum:
+                ws.range(f'a{row}:k{row}').color = (201, 40, 40)
+            wb.save()
+
     elif mode == 'contract':
         zeroError = False
+        rowsNum = []
         peDatas = pe.DataFrame(pe.read_excel(f'{contractFilePath}',header=None))
-        app = xlwings.App(visible=False)
-        wb = app.books.open(f'{contractFilePath}')
-        ws = wb.sheets[0]
         for row in range(len(peDatas[1])):
             if peDatas[1][row]==0.0 or isinstance(peDatas[1][row], str):
                 zeroError = True
-                ws.range(f'a{row+1}:b{row+1}').color = (201,40,40)
-        wb.save()
-        wb.close()
-        app.quit()
+                rowsNum.append(row+1)
         if zeroError:
             ui.showErrorMessagebox(text='Некорректное значение\nв файле договора')
-            app = xlwings.App(visible=True,add_book=False)
+            app = xlwings.App(visible=True, add_book=False)
             wb = app.books.open(f'{contractFilePath}')
+            ws = wb.sheets[0]
+            for row in rowsNum:
+                ws.range(f'a{row}:k{row}').color = (201, 40, 40)
+            wb.save()
 
 class Ui_MainWindow(object):
 
@@ -423,7 +408,7 @@ class Ui_MainWindow(object):
         #############################################
         
         self.labelGetOutput = QtWidgets.QLabel(self.centralwidget)
-        self.labelGetOutput.setGeometry(QtCore.QRect(420, 155, 140, 30))
+        self.labelGetOutput.setGeometry(QtCore.QRect(415, 155, 140, 30))
         self.labelGetOutput.setObjectName("label_2")
         self.labelGetOutput.setStyleSheet("font-size: 21px;\n")
 
@@ -437,8 +422,9 @@ class Ui_MainWindow(object):
         #############################################
 
         self.labelContract = QtWidgets.QLabel(self.centralwidget)
-        self.labelContract.setGeometry(QtCore.QRect(385, 300, 210, 30))
+        self.labelContract.setGeometry(QtCore.QRect(375, 300, 210, 30))
         self.labelContract.setObjectName("label_6")
+        self.labelContract.setStyleSheet("font-size: 21px;\n")
         self.labelContract.setEnabled(False)
 
         #############################################
@@ -798,10 +784,10 @@ class Ui_MainWindow(object):
             if retval == QtWidgets.QMessageBox.Retry:
                 connect(mode='recheck')
 
-    def showFinalMessage(self):
+    def showFinalMessage(self, text='Файл сгенерирован'):
         msg = QtWidgets.QMessageBox()
         msg.setIcon(QtWidgets.QMessageBox.Information)
-        msg.setText('Файл сгенерирован')
+        msg.setText(text)
         msg.setWindowTitle("Готово")
         retval = msg.exec_()
 
