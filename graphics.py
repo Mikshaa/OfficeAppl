@@ -1,4 +1,5 @@
 import os
+import time
 import rec_rc
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtGui import * 
@@ -9,6 +10,7 @@ import pandas as pe
 import openpyxl
 import datetime
 import xlrd
+from math import floor
 
 
 curMode = 'Device'
@@ -16,6 +18,8 @@ curSecondMode = 'Consolid'
 curDeviceCode = ''
 curAmount = 0
 curFile = ''
+
+
 
 inputFilesPath = ''
 outputFilesPath = ''
@@ -33,7 +37,7 @@ var_4 = ''
 var_5 = ''
 var_6 = ''
 
-checkForFormula = ['A', 'I', 'U', 'E', 'X', 'K', 'L', 'O', '', 'S', 'G']
+checkForFormula = ['A', 'I', 'i', 'U', 'E', 'X', 'K', 'L', 'O', 'S', 'G','У','.','W','З','В','М','О','Е','Р','С','А','Л','К','Т','Ь','И']
 checkDeviceCode = True
 zeroError = False
 contractFilesError = False
@@ -116,6 +120,22 @@ def setVars(device_code):
         checkDeviceCode = False
         ui.showErrorMessagebox(text='Неправильно указан\nтип крепления')
         return
+
+def correctFinalFile(filePath, length):
+    row = 1
+    wb = app.books.open(filePath)
+    ws = wb.sheets[0]
+    while row < length:
+        if ws.range(f'b{row}').value == 0:
+            ws.range(f'a{row}').delete(shift='up')
+            ws.range(f'b{row}').delete(shift='up')
+        else:
+            if isinstance(ws.range(f'b{row}').value, float):
+                ws.range(f'b{row}').value = floor(float(ws.range(f'b{row}').value*1000))/1000
+            ws.range(f'b{row}').value = ws.range(f'b{row}').value
+            row += 1
+    wb.save()
+    wb.close()
 def generateDeviceOutuput(mode='device', contractAmount = None):
     global curDeviceCode
     global devicesList
@@ -127,10 +147,11 @@ def generateDeviceOutuput(mode='device', contractAmount = None):
         ui.deviceCodeChanged(ui.comboBoxGetDevice.currentText(), mode='device')
     elif mode == 'contract':
         curAmount = contractAmount
+
+    if not checkDeviceCode:
+        return
     checkZeros(mode='device')
     if zeroError:
-        return
-    if not checkDeviceCode:
         return
     if inputFilesPath == '':
         ui.showErrorMessagebox(text='Отсутствует директория\nс файлами-шаблонов')
@@ -160,29 +181,38 @@ def generateDeviceOutuput(mode='device', contractAmount = None):
     finalSavePath = f'{outputFilesPath}/{curDeviceCode}_{datetime.datetime.now().strftime("%Y-%m-%d")}_{curAmount}.xlsx'
     wb.save(finalSavePath)
     if mode=='contract':
-        contractDevices.append(finalSavePath)
-    row= 1
-    app = xlwings.App(visible=False)
-    wb = app.books.open(finalSavePath)
-    ws = wb.sheets[0]
-    while row<len(peData)+1:
-        if ws.range(f'b{row}').value == 0:
-            ws.range(f'a{row}').delete(shift='up')
-            ws.range(f'b{row}').delete(shift='up')
-        else:
-            if isinstance(ws.range(f'b{row}').value, float):
-                ws.range(f'b{row}').value = round(ws.range(f'b{row}').value, 1)
-            ws.range(f'b{row}').value = ws.range(f'b{row}').value
-            row += 1
-    wb.save()
-    wb.close()
-    app.quit()
+        contractDevices.append([finalSavePath, len(peData)+1])
+
+
+
+    if mode == 'device':
+        row = 1
+        print(finalSavePath)
+        app = xlwings.App(visible=False, add_book=False)
+        wb = app.books.open(finalSavePath)
+        ws = wb.sheets[0]
+        while row < len(peData)+1:
+            if ws.range(f'b{row}').value == 0:
+                ws.range(f'a{row}').delete(shift='up')
+                ws.range(f'b{row}').delete(shift='up')
+            else:
+                if isinstance(ws.range(f'b{row}').value, float):
+                    ws.range(f'b{row}').value = floor(float(ws.range(f'b{row}').value*1000))/1000
+                else:
+                    ws.range(f'b{row}').value = ws.range(f'b{row}').value
+                row += 1
+        wb.save()
+        wb.close()
+        app.quit()
+    elif mode == 'contract':
+        pass
     if mode=='device':
         ui.showFinalMessage()
 
 def genarateContractOutput():
-    global curContractFile, contractFilePath, curSecondMode, curDeviceCode, zeroError, contractFilesError, contractDevices
+    global curContractFile, contractFilePath, curSecondMode, curDeviceCode, zeroError, contractFilesError, contractDevices, app
     filesError = False
+    contractDevices = []
     contractData = pe.DataFrame(pe.read_excel(contractFilePath,header=None))
     app = xlwings.App(visible=False)
     wb = app.books.open(f'{contractFilePath}')
@@ -210,14 +240,19 @@ def genarateContractOutput():
         contractAmount = contractData[1][row]
         ui.deviceCodeChanged(deviceCode)
         generateDeviceOutuput(mode='contract', contractAmount=contractAmount)
+    time.sleep(2)
+    app = xlwings.App(visible=False, add_book=False)
+    for device in contractDevices:
+        correctFinalFile(device[0], device[1])
+    app.quit()
     if curSecondMode == 'Separate':
         ui.showFinalMessage(text='Файлы сгенерированы')
     elif curSecondMode == 'Consolid':
         wbDataFrames = []
         for device in contractDevices:
-            wbData = pe.DataFrame(pe.read_excel(device,header=None))
+            wbData = pe.DataFrame(pe.read_excel(device[0],header=None))
             wbDataFrames.append(wbData)
-            os.remove(device)
+            os.remove(device[0])
         wbDataFinal = wbDataFrames[0]
         wbDataFinalList = wbDataFinal[0].tolist()
         wbValues = wbDataFinal[1].tolist()
@@ -234,27 +269,32 @@ def genarateContractOutput():
         for i in range(len(wbDataFinalList)):
             ws_final[f'A{i+1}'] = wbDataFinalList[i]
             ws_final[f'B{i+1}'] = wbValues[i]
-        wb_final.save(f'{outputFilesPath}/консолид.xlsx')
-
-
-
-
-
-
-
+        wb_final.save(f'{outputFilesPath}/{contractFilePath[contractFilePath.rfind("/")+1:contractFilePath.rfind(".")]}.xlsx')
+        ui.showFinalMessage(text='Файл договора\nсгенерирован')
 
 def pasteVarsInFormula(formula):
+    nInFormula = False
     formula = formula.replace('П1', var_1)
     formula = formula.replace('П2', var_2)
     formula = formula.replace('П3', var_3)
-    formula = formula.replace('Ш', var_4)
-    formula = formula.replace('В', var_5)
+    for i in range(len(formula)):
+        if formula[i] == 'Ш' and formula[i-1] not in checkForFormula:
+            formula = formula.replace('Ш', var_4)
+    for i in range(len(formula)):
+        if formula[i] == 'В' and formula[i-1] not in checkForFormula:
+            formula = formula.replace('В', var_5)
     formula = formula.replace('П6', var_6)
-    for i in range(1,len(formula)):
+    print(formula)
+    for i in range(len(formula)):
         if formula[i] == 'N' and formula[i-1] not in checkForFormula:
-            formula = formula.replace('N', curAmount)
+            formula = formula[:i]+str(curAmount)+formula[i+1:]
+            nInFormula = True
+    print(formula)
     formula = formula.replace(';', ',')
-    formula = f'=({formula})*{curAmount}'
+    if nInFormula:
+        formula = f'=({formula})'
+    else:
+        formula = f'=({formula})*{curAmount}'
     return formula
 
 def checkZeros(mode = 'device'):
@@ -443,7 +483,6 @@ class Ui_MainWindow(object):
         #############################################
 
         self.comboBoxGetDevice = QtWidgets.QComboBox(self.centralwidget)
-        #self.comboBoxGetDevice.setEnabled(False)
         self.comboBoxGetDevice.setGeometry(QtCore.QRect(660, 75, 500, 40))
         self.comboBoxGetDevice.setStyleSheet("QComboBox{\n"
                                     "background-color: #fff;\n"
@@ -513,20 +552,22 @@ class Ui_MainWindow(object):
 
 
     def deviceCodeChanged(self, text, mode = 'device'):
-        global curDeviceCode, curFile, contractFilesError
+        global curDeviceCode, curFile, contractFilesError, checkDeviceCode
         contractFilesError = False
         if text.split('-')[0] == 'ВШ':
             for file in devicesList:
                 if f'ВП {text.split("-")[0]}-{text.split("-")[1]}' in file or f'ВП {text.split("-")[0]}-{text.split("-")[1]}' in file:
                     curDeviceCode = text
                     curFile = file
+                    setVars(curDeviceCode)
                     break
                 else:
                     curDeviceCode = ''
-            setVars(curDeviceCode)
+
             if curDeviceCode == '':
                 if mode == 'device':
                     self.showErrorMessagebox(text='Файл-шаблон\nотсутствует')
+                    checkDeviceCode = False
                 else:
                     contractFilesError = True
         else:
@@ -534,12 +575,14 @@ class Ui_MainWindow(object):
                 if f'ВП {text}.xlsx' == file or f'ВП {text}.xls' == file:
                     curDeviceCode = text
                     curFile = file
+                    checkDeviceCode = True
                     break
                 else:
                     curDeviceCode = ''
             if curDeviceCode == '':
                 if mode == 'device':
                     self.showErrorMessagebox(text='Файл-шаблон\nотсутствует')
+                    checkDeviceCode = False
                 else:
                     contractFilesError = True
 
@@ -551,7 +594,6 @@ class Ui_MainWindow(object):
         global curSecondMode
         if self.radioButtonDevice.isChecked():
             curMode = 'Device'
-            print(curMode)
             self.radioButtonConsolid.setChecked(True)
             self.radioButtonDelen.setChecked(False)
             self.radioButtonConsolid.setEnabled(False)
@@ -628,8 +670,6 @@ class Ui_MainWindow(object):
         else:
             curMode = 'Contract'
             curSecondMode = 'Consolid'
-            print(curMode)
-            print(curSecondMode)
             self.radioButtonConsolid.setChecked(True)
             self.radioButtonDelen.setChecked(False)
             self.radioButtonConsolid.setEnabled(True)
@@ -763,12 +803,9 @@ class Ui_MainWindow(object):
         with open(f"{path}/Перечень изделий ЗАО ЗЭТ.txt", encoding='utf-8') as file:
             for item in file:
                 self.comboBoxGetDevice.addItem(item.replace('\n',''))
-        #self.deviceCodeChanged(self.comboBoxGetDevice.currentText())
-
     def showErrorMessagebox(self, mode='default', text=''):
         msg = QtWidgets.QMessageBox()
         msg.setIcon(QtWidgets.QMessageBox.Critical)
-        # msg.setIcon(QtWidgets.QMessageBox.Information)
         msg.setText(text)
         msg.setWindowTitle("Information MessageBox")
         if mode == 'default':
@@ -802,7 +839,6 @@ class Ui_MainWindow(object):
         self.buttonGetInput.setText(_translate("MainWindow", "..."))
         self.labelGetOutput.setText(_translate("MainWindow", "Сохранять в"))
         self.labelDeviceCode.setText(_translate("MainWindow", "Выбор изделия"))
-        #self.labelGetAmount.setText(_translate("MainWindow", "Количество"))
         self.labelContract.setText(_translate("MainWindow", "Выбор договора"))
         self.buttonGetContract.setText(_translate("MainWindow", "..."))
         self.radioButtonDevice.setText(_translate("MainWindow", "Изделие"))
